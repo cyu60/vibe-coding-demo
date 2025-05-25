@@ -3,552 +3,1542 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AI Ethics Simulation: Choose Your Path</title>
+    <title>EthicScope - AI Ethics Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
     />
     <style id="app-style">
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+
       body {
-        font-family: "Inter", sans-serif;
-        background-color: blue;
-        color: #334155;
+        font-family: "Roboto", sans-serif;
+        background-color: #f0f4f8;
+        color: #333;
       }
 
-      .avatar-option {
-        cursor: pointer;
-        transition: transform 0.2s, opacity 0.2s;
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: "Space Grotesk", sans-serif;
       }
 
-      .avatar-option:hover {
-        transform: scale(1.1);
-        opacity: 0.9;
+      .scenario-panel {
+        background-size: cover;
+        background-position: center;
+        transition: background-image 0.5s ease-in-out;
+        position: relative;
+        overflow: hidden;
       }
 
-      .avatar-option.selected {
-        border: 3px solid #3b82f6;
-        transform: scale(1.05);
+      .scenario-panel::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1;
       }
 
-      .choice-btn {
-        transition: all 0.2s;
+      .scenario-content {
+        position: relative;
+        z-index: 2;
       }
 
-      .choice-btn:hover {
+      .decision-btn {
+        transition: all 0.3s ease;
+      }
+
+      .decision-btn:hover {
         transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+
+      .avatar-container {
+        position: relative;
+        transition: all 0.3s ease;
+      }
+
+      .avatar-container img {
+        transition: all 0.3s ease;
+      }
+
+      .avatar-badge {
+        position: absolute;
+        bottom: -5px;
+        right: -5px;
+        z-index: 10;
+      }
+
+      .scenario-transition {
+        animation: fadeIn 0.5s ease-in-out;
+      }
+
+      .ai-bubble {
+        position: relative;
+      }
+
+      .ai-bubble::before {
+        content: "";
+        position: absolute;
+        top: 20px;
+        left: -10px;
+        border-width: 10px 10px 10px 0;
+        border-style: solid;
+        border-color: transparent #4f46e5 transparent transparent;
+      }
+
+      .feedback-overlay {
+        backdrop-filter: blur(8px);
+        background-color: rgba(255, 255, 255, 0.8);
+      }
+
+      .flowchart-node {
+        transition: all 0.3s ease;
+      }
+
+      .flowchart-node:hover {
+        transform: scale(1.05);
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
           0 2px 4px -1px rgba(0, 0, 0, 0.06);
       }
 
-      .scenario-card {
-        min-height: 280px;
+      .loading-spinner {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top: 4px solid #4f46e5;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
       }
 
-      .assistant-panel {
-        min-height: 280px;
-      }
-
-      .journal-entry {
-        border-left: 3px solid #3b82f6;
-      }
-
-      @keyframes pulse {
-        0%,
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
         100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.5;
+          transform: rotate(360deg);
         }
       }
 
-      .loading {
-        animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      .hidden {
+        display: none;
       }
 
-      @media (max-width: 768px) {
-        .main-container {
-          flex-direction: column;
-        }
+      .path-history-item {
+        position: relative;
+      }
 
-        .scenario-card,
-        .assistant-panel {
-          width: 100%;
-        }
-
-        .journal-area {
-          position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          max-height: 50vh;
-          z-index: 10;
-          border-top-left-radius: 1rem;
-          border-top-right-radius: 1rem;
-          box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
+      .path-history-item:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        left: 12px;
+        top: 24px;
+        bottom: 0;
+        width: 2px;
+        background-color: #4f46e5;
       }
     </style>
   </head>
   <body class="min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-6xl">
-      <header class="mb-6">
-        <h1 class="text-3xl font-bold text-center mb-2 text-indigo-800">
-          AI Ethics Simulation
-        </h1>
-        <p class="text-center text-gray-600 mb-6">
-          Explore the implications of AI surveillance in education and workplace
-          settings
+    <!-- Loading Screen -->
+    <div
+      id="loading-screen"
+      class="fixed inset-0 flex items-center justify-center bg-indigo-900 z-50"
+    >
+      <div class="text-center">
+        <h1 class="text-4xl font-bold text-white mb-4">EthicScope</h1>
+        <p class="text-white mb-6">Exploring AI Ethics in Everyday Scenarios</p>
+        <div class="loading-spinner mx-auto"></div>
+      </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app-container" class="hidden">
+      <!-- Top Toolbar -->
+      <div class="bg-indigo-900 text-white py-3 px-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+          <div class="flex items-center">
+            <h1 class="text-2xl font-bold">EthicScope</h1>
+          </div>
+          <div class="flex space-x-4">
+            <button
+              id="restart-btn"
+              class="flex items-center px-3 py-1 bg-indigo-700 rounded-md hover:bg-indigo-600 transition-colors"
+            >
+              <i class="fas fa-redo-alt mr-2"></i> Restart
+            </button>
+            <button
+              id="flowchart-btn"
+              class="flex items-center px-3 py-1 bg-indigo-700 rounded-md hover:bg-indigo-600 transition-colors"
+            >
+              <i class="fas fa-sitemap mr-2"></i> View Path
+            </button>
+            <button
+              id="share-btn"
+              class="flex items-center px-3 py-1 bg-indigo-700 rounded-md hover:bg-indigo-600 transition-colors"
+            >
+              <i class="fas fa-share-alt mr-2"></i> Share
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Selection Screen -->
+      <div
+        id="profile-selection"
+        class="container mx-auto px-4 py-10 max-w-4xl"
+      >
+        <h2 class="text-3xl font-bold text-center mb-8">
+          Choose Your Perspective
+        </h2>
+        <p class="text-center text-lg mb-10">
+          Select a profile to experience AI surveillance scenarios from
+          different perspectives.
         </p>
 
-        <!-- Avatar Selector -->
-        <div class="bg-white rounded-xl shadow-md p-4 mb-6">
-          <h2 class="text-lg font-medium mb-3 text-gray-700">
-            Choose your avatar
-          </h2>
-          <div class="flex flex-wrap justify-center gap-4">
-            <div
-              class="avatar-option w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center selected"
-              data-avatar="default"
-            >
-              <i class="fas fa-user text-blue-500 text-2xl"></i>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
+          <div
+            class="profile-card bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer"
+            data-profile="student"
+          >
+            <div class="flex flex-col items-center">
+              <img
+                src="https://cdn.pixabay.com/photo/2016/11/14/03/16/book-1822474_1280.jpg"
+                alt="Student Profile"
+                class="w-32 h-32 object-cover rounded-full mb-4"
+              />
+              <h3 class="text-2xl font-bold mb-2">Student</h3>
+              <p class="text-center text-gray-600">
+                Experience AI surveillance in educational settings, from
+                classroom monitoring to test proctoring.
+              </p>
+              <button
+                class="mt-6 bg-indigo-600 text-white px-6 py-2 rounded-full hover:bg-indigo-700 transition-colors"
+              >
+                Select
+              </button>
             </div>
-            <div
-              class="avatar-option w-16 h-16 bg-green-100 rounded-full flex items-center justify-center"
-              data-avatar="student"
-            >
-              <i class="fas fa-graduation-cap text-green-500 text-2xl"></i>
-            </div>
-            <div
-              class="avatar-option w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center"
-              data-avatar="worker"
-            >
-              <i class="fas fa-briefcase text-purple-500 text-2xl"></i>
-            </div>
-            <div
-              class="avatar-option w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center"
-              data-avatar="teacher"
-            >
-              <i class="fas fa-chalkboard-teacher text-yellow-600 text-2xl"></i>
-            </div>
-            <div
-              class="avatar-option w-16 h-16 bg-red-100 rounded-full flex items-center justify-center"
-              data-avatar="custom"
-            >
-              <i class="fas fa-plus text-red-500 text-2xl"></i>
+          </div>
+
+          <div
+            class="profile-card bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer"
+            data-profile="employee"
+          >
+            <div class="flex flex-col items-center">
+              <img
+                src="https://cdn.pixabay.com/photo/2015/01/09/11/08/startup-594090_1280.jpg"
+                alt="Employee Profile"
+                class="w-32 h-32 object-cover rounded-full mb-4"
+              />
+              <h3 class="text-2xl font-bold mb-2">Employee</h3>
+              <p class="text-center text-gray-600">
+                Navigate workplace AI monitoring, from productivity tracking to
+                communication analysis.
+              </p>
+              <button
+                class="mt-6 bg-indigo-600 text-white px-6 py-2 rounded-full hover:bg-indigo-700 transition-colors"
+              >
+                Select
+              </button>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      <!-- Main Content Area -->
-      <main>
-        <div class="main-container flex gap-6 mb-6">
-          <!-- Scenario Card -->
-          <div
-            class="scenario-card bg-white rounded-xl shadow-md p-6 w-2/3 flex flex-col"
-          >
-            <div class="scenario-content flex-grow mb-6">
-              <h2 class="text-xl font-semibold mb-4" id="scenario-title">
-                Welcome to the Simulation
-              </h2>
-              <p class="text-gray-700 mb-4" id="scenario-text">
-                You're about to experience different scenarios involving AI
-                surveillance. Your choices will guide you through various
-                ethical dilemmas and privacy considerations in educational and
-                workplace environments. Choose your path wisely.
-              </p>
-            </div>
-            <div class="scenario-choices space-y-3" id="choices-container">
-              <button
-                class="choice-btn w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-left"
-                data-choice="1"
-              >
-                Begin as a student navigating AI monitoring in education
-              </button>
-              <button
-                class="choice-btn w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-left"
-                data-choice="2"
-              >
-                Start as a worker experiencing workplace surveillance
-              </button>
-            </div>
-            <div
-              id="loading-state"
-              class="hidden loading flex-grow flex items-center justify-center"
-            >
-              <div class="text-center">
-                <i
-                  class="fas fa-circle-notch fa-spin text-indigo-600 text-3xl mb-2"
-                ></i>
-                <p class="text-gray-600">Loading your next scenario...</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- AI Assistant Panel -->
-          <div class="assistant-panel bg-white rounded-xl shadow-md p-6 w-1/3">
-            <div class="flex items-center mb-4">
+      <!-- Main Simulation Area -->
+      <div
+        id="simulation-area"
+        class="hidden container mx-auto px-4 py-6 max-w-6xl"
+      >
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Avatar & Info Column -->
+          <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl shadow-lg p-6">
               <div
-                class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3"
+                id="avatar-container"
+                class="avatar-container flex flex-col items-center mb-6"
               >
-                <i class="fas fa-robot text-indigo-600"></i>
+                <img
+                  id="avatar-image"
+                  src=""
+                  alt="Your Avatar"
+                  class="w-40 h-40 object-cover rounded-full mb-2"
+                />
+                <div
+                  id="avatar-badge"
+                  class="avatar-badge hidden w-10 h-10 flex items-center justify-center bg-indigo-600 text-white rounded-full"
+                >
+                  <i class="fas fa-lock"></i>
+                </div>
+                <h3 id="profile-name" class="text-xl font-bold mt-3">Name</h3>
+                <p id="profile-role" class="text-gray-600">Role</p>
               </div>
-              <h2 class="text-lg font-semibold">AI Ethics Assistant</h2>
-            </div>
-            <div class="assistant-content" id="assistant-content">
-              <p class="text-gray-700">
-                I'll provide context and ethical implications for each choice
-                you make throughout this simulation. After you make a decision,
-                I'll explain the privacy and ethical considerations of your
-                choices.
-              </p>
-            </div>
-          </div>
-        </div>
 
-        <!-- Reflection Journal -->
-        <div class="journal-area bg-white rounded-xl shadow-md overflow-hidden">
-          <div
-            class="journal-header bg-gray-50 p-4 flex justify-between items-center cursor-pointer"
-            id="journal-toggle"
-          >
-            <h2 class="text-lg font-semibold text-gray-700">
-              <i class="fas fa-book mr-2"></i> Reflection Journal
-            </h2>
-            <i
-              class="fas fa-chevron-down text-gray-500"
-              id="journal-chevron"
-            ></i>
+              <div id="ai-assistant" class="mt-4">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                  <i class="fas fa-robot mr-2 text-indigo-600"></i> AI Ethics
+                  Assistant
+                </h3>
+                <div
+                  id="ai-message"
+                  class="ai-bubble bg-indigo-600 text-white p-4 rounded-lg"
+                >
+                  <p>
+                    Welcome to EthicScope. I'll help explain the ethical
+                    implications of your choices.
+                  </p>
+                </div>
+              </div>
+
+              <div id="path-history" class="mt-8">
+                <h3 class="text-xl font-bold mb-4">Your Journey</h3>
+                <div id="path-history-items" class="pl-6">
+                  <!-- Path history items will be dynamically added here -->
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="journal-content p-4" id="journal-content">
-            <div class="mb-4">
-              <textarea
-                id="journal-input"
-                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
-                rows="3"
-                placeholder="Record your thoughts and reflections here..."
-              ></textarea>
+
+          <!-- Scenario Panel Column -->
+          <div class="lg:col-span-2">
+            <div
+              id="scenario-panel"
+              class="scenario-panel rounded-xl shadow-lg overflow-hidden"
+              style="
+                background-image: url('https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg');
+              "
+            >
+              <div class="scenario-content p-8 text-white min-h-[400px]">
+                <h2 id="scenario-title" class="text-3xl font-bold mb-4">
+                  Scenario Title
+                </h2>
+                <p id="scenario-text" class="text-lg mb-8">
+                  Scenario description will appear here...
+                </p>
+
+                <div id="decision-buttons" class="flex flex-col space-y-4 mt-8">
+                  <!-- Decision buttons will be dynamically added here -->
+                </div>
+              </div>
+            </div>
+
+            <div
+              id="reflection-button-container"
+              class="mt-4 text-center hidden"
+            >
               <button
-                id="save-journal"
-                class="mt-2 py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg"
+                id="reflection-btn"
+                class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors"
               >
-                Save Reflection
+                <i class="fas fa-lightbulb mr-2"></i> Reflect on your choices
               </button>
             </div>
-            <div class="journal-entries space-y-3" id="journal-entries">
-              <!-- Journal entries will be added here -->
-            </div>
           </div>
         </div>
+      </div>
 
-        <!-- Restart Button -->
-        <div class="text-center mt-8">
-          <button
-            id="restart-btn"
-            class="py-2 px-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg inline-flex items-center"
-          >
-            <i class="fas fa-redo mr-2"></i> Restart Simulation
-          </button>
+      <!-- Feedback Overlay -->
+      <div
+        id="feedback-overlay"
+        class="fixed inset-0 feedback-overlay z-40 flex items-center justify-center hidden"
+      >
+        <div
+          class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        >
+          <div class="flex justify-between items-start mb-6">
+            <h2 class="text-2xl font-bold">Ethical Reflection</h2>
+            <button
+              id="close-feedback"
+              class="text-gray-600 hover:text-gray-900"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+
+          <div id="feedback-content">
+            <h3 class="text-xl font-bold mb-4">Your Path So Far</h3>
+            <div id="feedback-path-summary" class="mb-6">
+              <!-- Path summary will be dynamically added here -->
+            </div>
+
+            <h3 class="text-xl font-bold mb-4">Ethical Considerations</h3>
+            <div id="feedback-ethics" class="mb-6">
+              <!-- Ethical considerations will be dynamically added here -->
+            </div>
+
+            <h3 class="text-xl font-bold mb-4">Reflection Questions</h3>
+            <ul id="feedback-questions" class="list-disc pl-6 mb-6">
+              <!-- Reflection questions will be dynamically added here -->
+            </ul>
+          </div>
+
+          <div class="mt-6 flex justify-end">
+            <button
+              id="continue-journey"
+              class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              Continue Journey
+            </button>
+          </div>
         </div>
-      </main>
+      </div>
+
+      <!-- Flowchart Overlay -->
+      <div
+        id="flowchart-overlay"
+        class="fixed inset-0 feedback-overlay z-40 flex items-center justify-center hidden"
+      >
+        <div
+          class="bg-white rounded-xl shadow-2xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        >
+          <div class="flex justify-between items-start mb-6">
+            <h2 class="text-2xl font-bold">Your Decision Path</h2>
+            <button
+              id="close-flowchart"
+              class="text-gray-600 hover:text-gray-900"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+
+          <div id="flowchart-content" class="flex flex-col items-center">
+            <p class="text-center mb-6">
+              This diagram shows the path you've taken through the simulation:
+            </p>
+            <div id="flowchart-diagram" class="w-full overflow-x-auto">
+              <!-- Flowchart will be dynamically generated here -->
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end">
+            <button
+              id="close-flowchart-btn"
+              class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              Return to Simulation
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- End Screen -->
+      <div
+        id="end-screen"
+        class="fixed inset-0 z-40 flex items-center justify-center hidden"
+      >
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full mx-4">
+          <h2 id="end-title" class="text-3xl font-bold mb-4 text-center">
+            Simulation Complete
+          </h2>
+          <p id="end-message" class="text-lg mb-6 text-center">
+            You've completed the EthicScope simulation!
+          </p>
+
+          <div id="end-summary" class="bg-gray-100 p-4 rounded-lg mb-6">
+            <!-- Summary will be dynamically added here -->
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              id="restart-simulation"
+              class="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center"
+            >
+              <i class="fas fa-redo-alt mr-2"></i> Start Over
+            </button>
+            <button
+              id="share-results"
+              class="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition-colors flex items-center justify-center"
+            >
+              <i class="fas fa-share-alt mr-2"></i> Share Results
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script id="app-script">
-      // State management
-      const state = {
-        currentScenario: "intro",
-        selectedAvatar: "default",
-        journalEntries: [],
-        journalVisible: true,
+      // Data Structures for Simulation
+      const studentScenarios = {
+        start: {
+          title: "First Day of Digital Learning",
+          text: "It's the first day of your new digital learning platform. Before you begin, you need to set up your account. The system asks for permission to access your webcam for identity verification during exams and participation tracking.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg",
+          choices: [
+            { id: "allow-access", text: "Allow webcam access" },
+            { id: "deny-access", text: "Deny webcam access" },
+          ],
+          aiMessage:
+            "Welcome to your first ethical decision point. How you handle access to your personal data can impact your privacy.",
+        },
+        "allow-access": {
+          title: "Test Monitoring",
+          text: "You're about to take your first online exam. The system indicates that during the test, it will use AI to analyze your eye movements, facial expressions, and background sounds to detect potential cheating.",
+          background:
+            "https://cdn.pixabay.com/photo/2015/07/17/22/43/student-594090_1280.jpg",
+          choices: [
+            { id: "accept-monitoring", text: "Accept the monitoring" },
+            {
+              id: "request-alternative",
+              text: "Request an alternative testing method",
+            },
+          ],
+          aiMessage:
+            "By allowing webcam access, you've enabled the school to collect biometric data about you. This creates a digital record that could be analyzed in ways you might not expect.",
+        },
+        "deny-access": {
+          title: "Alternative Verification",
+          text: "The system notifies you that without webcam access, you'll need to use alternative verification methods. This may include in-person proctoring for exams and less flexibility for remote learning.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/01/17/07/06/laptop-3087585_1280.jpg",
+          choices: [
+            { id: "accept-limitations", text: "Accept these limitations" },
+            {
+              id: "reconsider-webcam",
+              text: "Reconsider and allow webcam access",
+            },
+          ],
+          aiMessage:
+            "You've chosen to protect your visual privacy. This may limit some functionality but reduces the amount of biometric data collected about you.",
+        },
+        "accept-monitoring": {
+          title: "Flagged for Review",
+          text: "During your exam, you frequently looked away from the screen to think. The AI system has flagged your behavior as suspicious. Your instructor now needs to review the recording before finalizing your grade.",
+          background:
+            "https://cdn.pixabay.com/photo/2021/01/05/06/40/monitor-5889392_1280.png",
+          choices: [
+            {
+              id: "explain-behavior",
+              text: "Write an explanation to your instructor",
+            },
+            {
+              id: "accept-review",
+              text: "Accept the review process without comment",
+            },
+          ],
+          aiMessage:
+            "The AI monitoring system has made a judgment about your behavior that may not account for natural thinking processes. This demonstrates how algorithmic systems can misinterpret human actions.",
+        },
+        "request-alternative": {
+          title: "Accommodation Request",
+          text: "You request an in-person proctored exam as an alternative. The academic office informs you that this will require scheduling weeks in advance and may delay your course progression. They also note this choice will be recorded in your student file.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/01/17/07/06/laptop-3087585_1280.jpg",
+          choices: [
+            {
+              id: "wait-for-proctor",
+              text: "Accept the delay and wait for in-person testing",
+            },
+            {
+              id: "compromise-limited-monitoring",
+              text: "Negotiate for limited monitoring instead",
+            },
+          ],
+          aiMessage:
+            "Requesting alternatives shows you value your privacy rights, but it comes with practical consequences that may affect your academic progress.",
+        },
+        "accept-limitations": {
+          title: "Traditional Learning Path",
+          text: "You proceed with traditional verification methods. While this limits some digital features, you maintain greater privacy. However, you notice you're missing out on real-time feedback and some interactive learning tools that your peers are using.",
+          background:
+            "https://cdn.pixabay.com/photo/2016/11/14/03/16/book-1822474_1280.jpg",
+          choices: [
+            {
+              id: "stay-traditional",
+              text: "Continue with traditional methods",
+            },
+            {
+              id: "selective-access",
+              text: "Request selective access to specific features",
+            },
+          ],
+          aiMessage:
+            "Choosing privacy protection may create educational trade-offs, illustrating the tension between personal data protection and technological benefits.",
+        },
+        "reconsider-webcam": {
+          title: "Second Thoughts",
+          text: "You decide to enable webcam access after all. The system now asks for additional permissions: access to your microphone for participation tracking and location data to verify you're taking exams from approved locations.",
+          background:
+            "https://cdn.pixabay.com/photo/2015/07/17/22/43/student-594090_1280.jpg",
+          choices: [
+            {
+              id: "grant-all-access",
+              text: "Grant all requested permissions",
+            },
+            {
+              id: "webcam-only",
+              text: "Allow webcam only, deny other permissions",
+            },
+          ],
+          aiMessage:
+            "Notice how initial concessions often lead to requests for additional data access. This 'privacy erosion' is a common pattern in digital systems.",
+        },
+        "explain-behavior": {
+          title: "Advocacy Response",
+          text: "Your instructor appreciates your explanation and realizes the AI flagged normal thinking behavior. They decide to override the system's recommendation and give you full credit. However, they mention this process was time-consuming and may not always be possible.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg",
+          choices: [
+            {
+              id: "suggest-system-improvement",
+              text: "Suggest improvements to the monitoring system",
+            },
+            {
+              id: "document-incident",
+              text: "Document this incident for future reference",
+            },
+          ],
+          aiMessage:
+            "Human oversight successfully corrected an algorithmic error, but this raises questions about scalability and the burden placed on educators.",
+        },
+        "accept-review": {
+          title: "System Compliance",
+          text: "You accept the review process. Your grade is eventually cleared, but the incident remains in your digital record. You later learn that patterns of flags, even when overturned, may influence how the AI system treats you in future assessments.",
+          background:
+            "https://cdn.pixabay.com/photo/2021/01/05/06/40/monitor-5889392_1280.png",
+          choices: [
+            {
+              id: "research-data-usage",
+              text: "Research how your data is being used long-term",
+            },
+            {
+              id: "adapt-behavior",
+              text: "Modify your behavior to avoid future flags",
+            },
+          ],
+          aiMessage:
+            "Even when cleared, algorithmic flags can create lasting digital shadows that influence future automated decisions about you.",
+        },
+        "wait-for-proctor": {
+          title: "Educational Consequences",
+          text: "The three-week delay means you fall behind in your coursework. While you maintain your privacy, you must work extra hours to catch up. Some group projects have moved forward without you, affecting your collaborative learning experience.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/01/17/07/06/laptop-3087585_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Privacy protection sometimes requires personal sacrifice. This scenario illustrates how digital systems can create pressure to surrender privacy for convenience and academic success.",
+        },
+        "compromise-limited-monitoring": {
+          title: "Middle Ground",
+          text: "You negotiate a compromise: the system will monitor your screen but not use facial recognition or audio analysis. This allows for timely testing while maintaining some privacy boundaries. Your proactive advocacy leads to this option being offered to other students.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Finding middle ground through advocacy can create positive change for everyone. Your willingness to negotiate led to a more privacy-conscious option for all students.",
+        },
+        "stay-traditional": {
+          title: "Privacy-First Learning",
+          text: "You complete your education using traditional methods. While you miss some technological advantages, you graduate with complete control over your personal data. You've also inspired other students to be more thoughtful about their digital privacy choices.",
+          background:
+            "https://cdn.pixabay.com/photo/2016/11/14/03/16/book-1822474_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Consistency in privacy values, while challenging, can lead to personal empowerment and influence others to consider their own digital rights more carefully.",
+        },
+        "selective-access": {
+          title: "Customized Privacy",
+          text: "The school creates a customized privacy plan for you, allowing access to learning tools while protecting biometric data. This precedent helps other privacy-conscious students and influences the school's policy development.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Individual advocacy can drive systemic change. Your willingness to engage constructively led to better privacy options for the entire student body.",
+        },
+        "grant-all-access": {
+          title: "Full Surveillance Learning",
+          text: "With complete data access granted, the system provides highly personalized learning experiences but also creates a comprehensive digital profile of your behaviors, location patterns, and learning preferences that will be retained indefinitely.",
+          background:
+            "https://cdn.pixabay.com/photo/2021/01/05/06/40/monitor-5889392_1280.png",
+          choices: [],
+          aiMessage:
+            "Maximum convenience often comes with maximum surveillance. Consider the long-term implications of comprehensive data collection on your future autonomy and privacy.",
+        },
+        "webcam-only": {
+          title: "Partial Boundaries",
+          text: "You set partial boundaries, allowing visual monitoring while protecting audio and location privacy. The system works but occasionally prompts you to enable additional features, creating ongoing pressure to expand data sharing.",
+          background:
+            "https://cdn.pixabay.com/photo/2015/07/17/22/43/student-594090_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Partial privacy boundaries require ongoing vigilance. Systems often continue to request additional access, testing your commitment to your privacy principles.",
+        },
+        "suggest-system-improvement": {
+          title: "Student Advocacy",
+          text: "Your suggestions lead to improvements in the AI monitoring system, including better recognition of normal student behaviors. You're invited to join a student advisory committee on educational technology, giving you ongoing influence over digital privacy policies.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Constructive engagement with technology developers can create lasting positive change. Your experience with algorithmic bias led to improvements that benefit all students.",
+        },
+        "document-incident": {
+          title: "Evidence for Change",
+          text: "Your documentation becomes part of a growing body of evidence about AI bias in educational settings. Your case is cited in research and policy discussions, contributing to broader conversations about algorithmic fairness in education.",
+          background:
+            "https://cdn.pixabay.com/photo/2016/11/14/03/16/book-1822474_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Individual experiences, when documented, can contribute to broader understanding and policy change. Your case helps build evidence for more ethical AI in education.",
+        },
+        "research-data-usage": {
+          title: "Data Detective",
+          text: "Your research reveals concerning patterns in how student data is used beyond education, including partnerships with third-party companies. You decide to transfer to a school with stronger privacy protections, despite the academic disruption.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/01/17/07/06/laptop-3087585_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Deep investigation into data practices can reveal unexpected uses of personal information. Sometimes protecting your privacy requires making difficult choices about your educational path.",
+        },
+        "adapt-behavior": {
+          title: "System Conformity",
+          text: "You learn to behave in ways that avoid AI flags, but this changes how you naturally learn and express yourself. You excel academically but feel you've lost some authenticity in exchange for algorithmic approval.",
+          background:
+            "https://cdn.pixabay.com/photo/2021/01/05/06/40/monitor-5889392_1280.png",
+          choices: [],
+          aiMessage:
+            "Adapting behavior to satisfy algorithms can achieve practical success but may come at the cost of authentic self-expression and natural learning processes.",
+        }
       };
 
-      // DOM Elements
-      const scenarioTitle = document.getElementById("scenario-title");
-      const scenarioText = document.getElementById("scenario-text");
-      const choicesContainer = document.getElementById("choices-container");
-      const loadingState = document.getElementById("loading-state");
-      const assistantContent = document.getElementById("assistant-content");
-      const journalToggle = document.getElementById("journal-toggle");
-      const journalChevron = document.getElementById("journal-chevron");
-      const journalContent = document.getElementById("journal-content");
-      const journalInput = document.getElementById("journal-input");
-      const saveJournalBtn = document.getElementById("save-journal");
-      const journalEntries = document.getElementById("journal-entries");
-      const restartBtn = document.getElementById("restart-btn");
-      const avatarOptions = document.querySelectorAll(".avatar-option");
+      const employeeScenarios = {
+        start: {
+          title: "New Workplace Monitoring",
+          text: "Your company has introduced a new productivity monitoring system. It will track your keyboard activity, application usage, and take periodic screenshots. Management says this will help optimize workflow and resource allocation.",
+          background:
+            "https://cdn.pixabay.com/photo/2015/01/08/18/26/man-593333_1280.jpg",
+          choices: [
+            { id: "accept-monitoring", text: "Accept the monitoring" },
+            { id: "raise-concerns", text: "Raise privacy concerns with HR" },
+          ],
+          aiMessage:
+            "Workplace monitoring raises important questions about employee privacy rights versus employer interests in productivity tracking.",
+        },
+        "accept-monitoring": {
+          title: "Performance Review",
+          text: "After three months of monitoring, you're called for a performance review. Your manager shows you data indicating you spend 20% of your time on what the system categorizes as 'non-productive' websites, though some are research-related.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg",
+          choices: [
+            {
+              id: "defend-research",
+              text: "Explain these are necessary for research",
+            },
+            {
+              id: "accept-criticism",
+              text: "Accept the criticism and adjust behavior",
+            },
+          ],
+          aiMessage:
+            "The monitoring system has categorized your activities based on predetermined rules that may not account for the nuances of your specific role and research needs.",
+        },
+        "raise-concerns": {
+          title: "HR Discussion",
+          text: "HR explains that the monitoring system is company policy but offers to discuss specific concerns. They mention that some privacy accommodations might be possible on a case-by-case basis.",
+          background:
+            "https://cdn.pixabay.com/photo/2019/01/31/20/52/web-3967926_1280.jpg",
+          choices: [
+            {
+              id: "request-transparency",
+              text: "Request more transparency about data usage",
+            },
+            {
+              id: "suggest-alternatives",
+              text: "Suggest alternative productivity metrics",
+            },
+          ],
+          aiMessage:
+            "By raising concerns, you're exercising your agency in the workplace. Thoughtful dialogue can sometimes lead to more balanced monitoring approaches.",
+        },
+        "defend-research": {
+          title: "Justifying Work Patterns",
+          text: "You explain that research and learning are essential parts of your role. Your manager acknowledges this but says the system needs clearer categorization. They ask you to submit daily reports explaining your activities to help 'train' the AI system.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg",
+          choices: [
+            {
+              id: "submit-reports",
+              text: "Agree to submit daily activity reports",
+            },
+            {
+              id: "propose-work-categories",
+              text: "Propose better activity categorization system",
+            },
+          ],
+          aiMessage:
+            "Defending your work practices is reasonable, but notice how this shifts the burden to you to justify normal work behavior to an algorithmic system.",
+        },
+        "accept-criticism": {
+          title: "Behavioral Adaptation",
+          text: "You accept the feedback and modify your work habits to align with the system's expectations. Your productivity metrics improve, but you find yourself avoiding legitimate research activities and feeling more stressed about being constantly monitored.",
+          background:
+            "https://cdn.pixabay.com/photo/2015/01/08/18/26/man-593333_1280.jpg",
+          choices: [
+            {
+              id: "seek-mental-health-support",
+              text: "Discuss stress with employee wellness program",
+            },
+            {
+              id: "continue-adaptation",
+              text: "Continue adapting to maximize metrics",
+            },
+          ],
+          aiMessage:
+            "Changing natural work patterns to satisfy algorithms can create psychological stress and may actually reduce real productivity and creativity.",
+        },
+        "request-transparency": {
+          title: "Data Usage Revelation",
+          text: "HR provides a detailed report on data usage. You learn that your productivity data is shared with third-party analytics companies and used to benchmark against other companies. The data will be retained for 7 years and could impact future employment references.",
+          background:
+            "https://cdn.pixabay.com/photo/2019/01/31/20/52/web-3967926_1280.jpg",
+          choices: [
+            {
+              id: "request-data-deletion",
+              text: "Request deletion of your historical data",
+            },
+            {
+              id: "seek-legal-advice",
+              text: "Consult with an employment lawyer",
+            },
+          ],
+          aiMessage:
+            "Transparency reveals how workplace data often extends far beyond internal use. Your work patterns may be commodified and used in ways you never expected.",
+        },
+        "suggest-alternatives": {
+          title: "Collaborative Solutions",
+          text: "You propose alternative metrics like project completion rates and peer feedback instead of activity monitoring. Management is interested but concerned about implementing new systems. They offer to pilot your suggestions with your team first.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg",
+          choices: [
+            {
+              id: "lead-pilot-program",
+              text: "Lead the alternative metrics pilot program",
+            },
+            {
+              id: "request-broader-implementation",
+              text: "Push for company-wide policy changes",
+            },
+          ],
+          aiMessage:
+            "Constructive suggestions can lead to positive change. Your initiative shows how employee feedback can improve workplace technology policies.",
+        },
+        "submit-reports": {
+          title: "Administrative Burden",
+          text: "Daily reports take 30 minutes each day and feel like justifying your existence to a machine. However, your detailed explanations do help improve the AI's categorization for your role. Other employees ask you to share your reporting templates.",
+          background:
+            "https://cdn.pixabay.com/photo/2015/01/08/18/26/man-593333_1280.jpg",
+          choices: [
+            {
+              id: "share-templates",
+              text: "Share reporting templates with colleagues",
+            },
+            {
+              id: "propose-streamlined-process",
+              text: "Propose a more efficient reporting process",
+            },
+          ],
+          aiMessage:
+            "Individual compliance can help improve systems for everyone, but consider whether the administrative burden is a fair trade-off for algorithmic understanding.",
+        },
+        "propose-work-categories": {
+          title: "System Designer",
+          text: "Your categorization proposal is implemented company-wide, improving the monitoring system's accuracy. You're recognized for this contribution and asked to join the workplace technology committee, gaining influence over future privacy policies.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg",
+          choices: [
+            {
+              id: "join-tech-committee",
+              text: "Accept position on technology committee",
+            },
+            {
+              id: "focus-on-privacy-advocacy",
+              text: "Use position to advocate for privacy rights",
+            },
+          ],
+          aiMessage:
+            "Working within the system can create opportunities for positive change. Your expertise helps make monitoring more fair and accurate for everyone.",
+        },
+        "seek-mental-health-support": {
+          title: "Wellness Conversation",
+          text: "The wellness counselor acknowledges that monitoring-related stress is becoming common. They're documenting cases to present to management about the psychological impact of surveillance. Your experience contributes to growing awareness of these issues.",
+          background:
+            "https://cdn.pixabay.com/photo/2019/01/31/20/52/web-3967926_1280.jpg",
+          choices: [
+            {
+              id: "advocate-for-policy-change",
+              text: "Advocate for monitoring policy changes",
+            },
+            {
+              id: "focus-on-coping-strategies",
+              text: "Focus on personal coping strategies",
+            },
+          ],
+          aiMessage:
+            "Seeking support validates the psychological impact of workplace surveillance. Your experience helps build evidence for the human costs of extensive monitoring.",
+        },
+        "continue-adaptation": {
+          title: "Algorithmic Conformity",
+          text: "You become highly skilled at maximizing productivity metrics, but your work feels less creative and fulfilling. You're promoted based on your metrics, though you question whether the system truly measures valuable work contributions.",
+          background:
+            "https://cdn.pixabay.com/photo/2015/01/08/18/26/man-593333_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Success within algorithmic systems may come at the cost of authentic work satisfaction and creativity. Consider what aspects of work fulfillment might be unmeasurable by automated systems.",
+        },
+        "request-data-deletion": {
+          title: "Privacy Assertion",
+          text: "HR explains that data deletion would require legal justification and might affect your employment status. You realize that once surveillance data exists, removing it becomes complex and potentially career-limiting.",
+          background:
+            "https://cdn.pixabay.com/photo/2019/01/31/20/52/web-3967926_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Requesting data deletion reveals the permanence and entrenchment of workplace surveillance. Once monitoring begins, extracting yourself becomes difficult without professional consequences.",
+        },
+        "seek-legal-advice": {
+          title: "Legal Reality Check",
+          text: "A lawyer explains that workplace monitoring laws favor employers and that your options are limited. They suggest documenting everything and considering whether the job is worth the privacy trade-offs. You decide to look for employment at more privacy-conscious companies.",
+          background:
+            "https://cdn.pixabay.com/photo/2019/01/31/20/52/web-3967926_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Legal consultation reveals the imbalance of power in workplace surveillance. Sometimes protecting your privacy requires changing your employment situation entirely.",
+        },
+        "lead-pilot-program": {
+          title: "Change Agent",
+          text: "Your pilot program succeeds, demonstrating that trust-based metrics can be more effective than surveillance. The approach is adopted company-wide, and you become known as an advocate for humane workplace technology. Your leadership influences industry practices.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Leadership in developing alternatives to surveillance can create lasting positive change. Your initiative demonstrates that effective management doesn't require extensive monitoring.",
+        },
+        "request-broader-implementation": {
+          title: "Policy Advocate",
+          text: "Your push for company-wide changes faces resistance but eventually succeeds after you present evidence of improved productivity and employee satisfaction. Your advocacy creates a model that other companies begin to adopt.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Persistent advocacy for systemic change can overcome initial resistance. Your efforts demonstrate how individual initiative can influence broader industry practices toward more ethical technology use.",
+        },
+        "share-templates": {
+          title: "Collective Action",
+          text: "Your templates help colleagues navigate the monitoring system more effectively. This collaborative approach reduces everyone's stress and improves the AI's understanding of diverse work styles, creating a more supportive work environment for all.",
+          background:
+            "https://cdn.pixabay.com/photo/2015/01/08/18/26/man-593333_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Sharing strategies for dealing with surveillance creates solidarity and collective benefit. Your willingness to help others transforms individual compliance into community support.",
+        },
+        "propose-streamlined-process": {
+          title: "Efficiency Innovation",
+          text: "Your streamlined reporting process reduces the daily burden while maintaining system accuracy. Management implements your suggestions, and you're recognized for improving both employee experience and system effectiveness.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Innovation within constraints can reduce negative impacts while maintaining functionality. Your improvement benefits both individual employees and organizational effectiveness.",
+        },
+        "join-tech-committee": {
+          title: "Institutional Influence",
+          text: "As a committee member, you help shape technology policies that balance productivity goals with employee privacy. Your inside influence leads to more thoughtful implementation of workplace technologies and better protections for all employees.",
+          background:
+            "https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Working within institutional structures can create lasting positive change. Your position allows you to influence technology decisions from the inside, benefiting all employees.",
+        },
+        "focus-on-privacy-advocacy": {
+          title: "Rights Champion",
+          text: "You use your committee position to consistently advocate for employee privacy rights. While progress is slow, your persistent voice leads to stronger data protection policies and more employee input in technology decisions.",
+          background:
+            "https://cdn.pixabay.com/photo/2019/01/31/20/52/web-3967926_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Dedicated privacy advocacy within organizations can create incremental but important protections. Your consistent voice helps ensure employee perspectives are heard in technology decisions.",
+        },
+        "advocate-for-policy-change": {
+          title: "Wellness-Driven Reform",
+          text: "Your advocacy, supported by documented stress cases, leads to policy changes that reduce monitoring intensity and provide opt-out options for certain tracking. Your personal experience becomes a catalyst for broader workplace wellness improvements.",
+          background:
+            "https://cdn.pixabay.com/photo/2019/01/31/20/52/web-3967926_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Personal experiences with surveillance impacts can drive meaningful policy reform. Your willingness to speak up about mental health effects helps create more humane workplace policies.",
+        },
+        "focus-on-coping-strategies": {
+          title: "Personal Resilience",
+          text: "You develop effective coping strategies for surveillance stress and share them with colleagues. While the system doesn't change, you help create a support network that makes the work environment more bearable for everyone.",
+          background:
+            "https://cdn.pixabay.com/photo/2019/01/31/20/52/web-3967926_1280.jpg",
+          choices: [],
+          aiMessage:
+            "Individual resilience and peer support can help manage surveillance stress when systemic change isn't possible. Your coping strategies benefit both you and your colleagues.",
+        }
+      };
 
-      // Initialize the app
-      function init() {
-        // Load journal entries from localStorage
-        loadJournalEntries();
+      // Reflection questions for feedback overlay
+      const reflectionQuestions = {
+        student: [
+          "How does educational surveillance affect your learning experience?",
+          "What types of data collection in education feel appropriate versus invasive?",
+          "How might AI monitoring systems misinterpret student behaviors?",
+          "What safeguards should be in place for student data privacy?",
+        ],
+        employee: [
+          "How does workplace monitoring affect your job satisfaction and stress?",
+          "What boundaries should exist between work performance monitoring and personal privacy?",
+          "How might algorithmic performance evaluation miss important context?",
+          "What alternatives to surveillance could foster both productivity and trust?",
+        ],
+      };
 
-        // Set up event listeners
-        setupEventListeners();
+      // Helper functions for dynamic scenario processing
+      function extractScenarioTitle(scenarioText) {
+        // Extract first sentence as title, or use a simple heuristic
+        const sentences = scenarioText.split('.');
+        if (sentences.length > 0) {
+          let title = sentences[0].trim();
+          // Limit title length
+          if (title.length > 60) {
+            title = title.substring(0, 57) + "...";
+          }
+          return title;
+        }
+        return null;
       }
 
-      // Setup event listeners
-      function setupEventListeners() {
-        // Avatar selection
-        avatarOptions.forEach((option) => {
-          option.addEventListener("click", function () {
-            avatarOptions.forEach((opt) => opt.classList.remove("selected"));
-            this.classList.add("selected");
-            state.selectedAvatar = this.getAttribute("data-avatar");
+      function getBackgroundForScenario(scenarioId) {
+        // Return appropriate background based on scenario ID or content
+        const backgrounds = {
+          // Default backgrounds for different types
+          'monitoring': 'https://cdn.pixabay.com/photo/2021/01/05/06/40/monitor-5889392_1280.png',
+          'workplace': 'https://cdn.pixabay.com/photo/2015/01/08/18/26/man-593333_1280.jpg',
+          'education': 'https://cdn.pixabay.com/photo/2015/07/17/22/43/student-594090_1280.jpg',
+          'decision': 'https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg',
+          'default': 'https://cdn.pixabay.com/photo/2018/03/10/12/00/teamwork-3213924_1280.jpg'
+        };
 
-            if (state.selectedAvatar === "custom") {
-              // Here you could add a modal for custom avatar creation
-              alert(
-                "Custom avatar creation will be available in the full version."
-              );
-              this.classList.remove("selected");
-              document
-                .querySelector('[data-avatar="default"]')
-                .classList.add("selected");
-              state.selectedAvatar = "default";
+        // Check if scenarioId contains keywords
+        for (const [key, background] of Object.entries(backgrounds)) {
+          if (scenarioId.toLowerCase().includes(key)) {
+            return background;
+          }
+        }
+
+        return backgrounds.default;
+      }
+
+      // Application State
+      let state = {
+        loading: true,
+        profile: null,
+        currentScenario: "start",
+        visitedScenarios: [],
+        badges: [],
+        showFeedback: false,
+        showFlowchart: false,
+        pathHistory: [],
+        avatarFeatures: {}, // Add this to track avatar features from API
+      };
+
+      // DOM References
+      const elements = {
+        loadingScreen: document.getElementById("loading-screen"),
+        appContainer: document.getElementById("app-container"),
+        profileSelection: document.getElementById("profile-selection"),
+        simulationArea: document.getElementById("simulation-area"),
+        scenarioPanel: document.getElementById("scenario-panel"),
+        scenarioTitle: document.getElementById("scenario-title"),
+        scenarioText: document.getElementById("scenario-text"),
+        decisionButtons: document.getElementById("decision-buttons"),
+        aiMessage: document.getElementById("ai-message"),
+        avatarImage: document.getElementById("avatar-image"),
+        avatarBadge: document.getElementById("avatar-badge"),
+        profileName: document.getElementById("profile-name"),
+        profileRole: document.getElementById("profile-role"),
+        pathHistoryItems: document.getElementById("path-history-items"),
+        feedbackOverlay: document.getElementById("feedback-overlay"),
+        flowchartOverlay: document.getElementById("flowchart-overlay"),
+        feedbackPathSummary: document.getElementById("feedback-path-summary"),
+        feedbackEthics: document.getElementById("feedback-ethics"),
+        feedbackQuestions: document.getElementById("feedback-questions"),
+        reflectionButtonContainer: document.getElementById(
+          "reflection-button-container"
+        ),
+        endScreen: document.getElementById("end-screen"),
+        endTitle: document.getElementById("end-title"),
+        endMessage: document.getElementById("end-message"),
+        endSummary: document.getElementById("end-summary"),
+        flowchartDiagram: document.getElementById("flowchart-diagram"),
+      };
+
+      // Button Event Listeners
+      document
+        .getElementById("restart-btn")
+        .addEventListener("click", restartSimulation);
+      document
+        .getElementById("flowchart-btn")
+        .addEventListener("click", showFlowchart);
+      document
+        .getElementById("share-btn")
+        .addEventListener("click", shareResults);
+      document
+        .getElementById("reflection-btn")
+        .addEventListener("click", showReflection);
+      document
+        .getElementById("close-feedback")
+        .addEventListener("click", hideReflection);
+      document
+        .getElementById("continue-journey")
+        .addEventListener("click", hideReflection);
+      document
+        .getElementById("close-flowchart")
+        .addEventListener("click", hideFlowchart);
+      document
+        .getElementById("close-flowchart-btn")
+        .addEventListener("click", hideFlowchart);
+      document
+        .getElementById("restart-simulation")
+        .addEventListener("click", restartSimulation);
+      document
+        .getElementById("share-results")
+        .addEventListener("click", shareResults);
+
+      // Profile selection event listeners
+      document.querySelectorAll(".profile-card").forEach((card) => {
+        card.addEventListener("click", () =>
+          selectProfile(card.dataset.profile)
+        );
+      });
+
+      // Initialize Application
+      initApp();
+
+      function initApp() {
+        // Simulate loading
+        setTimeout(() => {
+          state.loading = false;
+          elements.loadingScreen.classList.add("hidden");
+          elements.appContainer.classList.remove("hidden");
+
+          // Check if there's a saved state in localStorage
+          const savedState = localStorage.getItem("ethicscope-state");
+          if (savedState) {
+            try {
+              const parsedState = JSON.parse(savedState);
+              state = { ...state, ...parsedState };
+
+              if (state.profile) {
+                // Resume from saved state
+                elements.profileSelection.classList.add("hidden");
+                elements.simulationArea.classList.remove("hidden");
+                updateAvatar();
+                renderScenario(state.currentScenario);
+                renderPathHistory();
+
+                if (state.pathHistory.length > 1) {
+                  elements.reflectionButtonContainer.classList.remove("hidden");
+                }
+              }
+            } catch (e) {
+              console.error("Error loading saved state:", e);
+              // If there's an error, start fresh
+              showProfileSelection();
             }
-          });
-        });
+          } else {
+            showProfileSelection();
+          }
+        }, 2000);
+      }
 
-        // Scenario choices
-        choicesContainer.addEventListener("click", function (e) {
-          if (e.target.classList.contains("choice-btn")) {
-            const choiceId = e.target.getAttribute("data-choice");
-            handleChoice(choiceId);
+      function showProfileSelection() {
+        elements.profileSelection.classList.remove("hidden");
+        elements.simulationArea.classList.add("hidden");
+      }
+
+      function selectProfile(profile) {
+        state.profile = profile;
+        state.currentScenario = "start";
+        state.visitedScenarios = ["start"];
+        state.badges = [];
+        state.pathHistory = [];
+
+        updateAvatar();
+
+        elements.profileSelection.classList.add("hidden");
+        elements.simulationArea.classList.remove("hidden");
+
+        renderScenario("start");
+        saveState();
+      }
+
+      function updateAvatar() {
+        if (state.profile === "student") {
+          elements.avatarImage.src =
+            "https://cdn.pixabay.com/photo/2016/11/14/03/16/book-1822474_1280.jpg";
+          elements.profileName.textContent = "Student";
+          elements.profileRole.textContent = "University Undergraduate";
+        } else {
+          elements.avatarImage.src =
+            "https://cdn.pixabay.com/photo/2015/01/09/11/08/startup-594090_1280.jpg";
+          elements.profileName.textContent = "Employee";
+          elements.profileRole.textContent = "Knowledge Worker";
+        }
+
+        // Update badges based on state
+        elements.avatarBadge.classList.add("hidden");
+        if (state.badges && state.badges.length > 0) {
+          elements.avatarBadge.classList.remove("hidden");
+          // You could customize badge icon based on specific badges earned
+        }
+      }
+
+      function renderScenario(scenarioId) {
+        // Get the appropriate scenario data based on profile
+        const scenarios =
+          state.profile === "student" ? studentScenarios : employeeScenarios;
+        const scenario = scenarios[scenarioId];
+
+        if (!scenario) {
+          console.error(`Scenario ${scenarioId} not found`);
+          return;
+        }
+
+        // Add this scenario to visited list if not already there
+        if (!state.visitedScenarios.includes(scenarioId)) {
+          state.visitedScenarios.push(scenarioId);
+        }
+
+        // Update state
+        state.currentScenario = scenarioId;
+
+        // Add to path history if not already there
+        const existingPathItem = state.pathHistory.find(
+          (item) => item.id === scenarioId
+        );
+        if (!existingPathItem) {
+          state.pathHistory.push({
+            id: scenarioId,
+            title: scenario.title,
+          });
+        }
+
+        // Show loading state
+        elements.scenarioPanel.classList.add("opacity-50");
+        elements.decisionButtons.innerHTML =
+          '<div class="loading-spinner mx-auto"></div>';
+
+        // Simulate loading delay
+        setTimeout(() => {
+          // Update scenario content
+          elements.scenarioTitle.textContent = scenario.title;
+          elements.scenarioText.textContent = scenario.text;
+          elements.scenarioPanel.style.backgroundImage = `url('${scenario.background}')`;
+          elements.aiMessage.textContent = scenario.aiMessage;
+
+          // Update decision buttons
+          elements.decisionButtons.innerHTML = "";
+          
+          // Handle scenarios without choices (end scenarios)
+          if (!scenario.choices || scenario.choices.length === 0) {
+            // This is likely an end scenario, show completion message
+            elements.decisionButtons.innerHTML = `
+              <div class="bg-indigo-100 border border-indigo-400 text-indigo-700 px-4 py-3 rounded">
+                <p class="font-semibold">Scenario Complete</p>
+                <p class="mt-2">Reflect on the choices you've made in this journey.</p>
+              </div>
+            `;
+            
+            // Show final reflection options
+            setTimeout(() => {
+              elements.decisionButtons.innerHTML += `
+                <div class="mt-4 flex flex-col space-y-2">
+                  <button onclick="showReflection()" class="decision-btn bg-white text-indigo-900 px-6 py-3 rounded-lg hover:bg-indigo-100 transition-colors">
+                    View Full Reflection
+                  </button>
+                  <button onclick="restartSimulation()" class="decision-btn bg-white text-indigo-900 px-6 py-3 rounded-lg hover:bg-indigo-100 transition-colors">
+                    Start New Journey
+                  </button>
+                </div>
+              `;
+            }, 1000);
+          } else {
+            // Regular scenario with choices
+            scenario.choices.forEach((choice) => {
+              const button = document.createElement("button");
+              button.className =
+                "decision-btn bg-white text-indigo-900 px-6 py-3 rounded-lg hover:bg-indigo-100 transition-colors text-left";
+              button.textContent = choice.text;
+              button.addEventListener("click", () => makeDecision(choice.id));
+              elements.decisionButtons.appendChild(button);
+            });
+          }
+
+          // Remove loading state
+          elements.scenarioPanel.classList.remove("opacity-50");
+
+          // Show reflection button if we've made at least one choice
+          if (state.pathHistory.length > 1) {
+            elements.reflectionButtonContainer.classList.remove("hidden");
+          }
+
+          // Render path history
+          renderPathHistory();
+
+          // Save state
+          saveState();
+        }, 1000);
+      }
+
+      //
+      // ADD: your Loop ID for scenario progression
+      //
+      const SCENARIO_PROGRESSION_LOOP_ID =
+        "15088deb-67a8-489e-a916-de4f2c4bebd6";
+
+      //
+      // REPLACE the existing makeDecision function with an async version
+      //
+      async function makeDecision(choiceId) {
+        // show loading state
+        elements.scenarioPanel.classList.add("opacity-50");
+        elements.decisionButtons.innerHTML =
+          '<div class="loading-spinner mx-auto"></div>';
+
+        // build payload for the Loop
+        const payload = {
+          scenarioId: state.currentScenario,
+          choiceKey: choiceId,
+          avatarState: {
+            role: state.profile,
+            features: state.avatarFeatures || {}, // use existing features or empty object
+          },
+        };
+
+        try {
+          // call the ScenarioProgressor Loop
+          const res = await fetch(
+            `https://magicloops.dev/api/loop/${SCENARIO_PROGRESSION_LOOP_ID}/run`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            }
+          );
+          
+          if (!res.ok) {
+            throw new Error(`API call failed with status ${res.status}`);
+          }
+          
+          const data = await res.json();
+          console.log("API Response:", data); // Debug logging
+
+          // Validate required fields
+          if (!data.nextScenarioId || !data.scenarioText) {
+            throw new Error("Invalid API response: missing required fields");
+          }
+
+          // update avatarState if returned
+          if (data.avatarState && data.avatarState.features) {
+            state.avatarFeatures = { ...state.avatarFeatures, ...data.avatarState.features };
+          }
+
+          // Create dynamic scenario object from API response
+          const dynamicScenario = {
+            title: extractScenarioTitle(data.scenarioText) || `Scenario ${data.nextScenarioId}`,
+            text: data.scenarioText,
+            background: getBackgroundForScenario(data.nextScenarioId),
+            choices: [], // Will be populated if this isn't an end scenario
+            aiMessage: data.assistantExplanation || "Continue your journey..."
+          };
+
+          // Store the dynamic scenario for rendering
+          const scenarios = state.profile === "student" ? studentScenarios : employeeScenarios;
+          scenarios[data.nextScenarioId] = dynamicScenario;
+
+          // advance to the next scenario
+          renderScenario(data.nextScenarioId);
+
+        } catch (err) {
+          console.error("Loop call failed:", err);
+          // Remove loading state
+          elements.scenarioPanel.classList.remove("opacity-50");
+          
+          // Show error message to user
+          elements.decisionButtons.innerHTML = `
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              <p>Unable to load next scenario. Please try again.</p>
+              <button onclick="location.reload()" class="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                Refresh Page
+              </button>
+            </div>
+          `;
+        }
+      }
+
+      function renderPathHistory() {
+        elements.pathHistoryItems.innerHTML = "";
+
+        state.pathHistory.forEach((item, index) => {
+          const historyItem = document.createElement("div");
+          historyItem.className = "path-history-item mb-4";
+
+          historyItem.innerHTML = `
+          <div class="flex items-start">
+            <div class="bg-indigo-600 rounded-full w-6 h-6 flex items-center justify-center text-white text-xs">
+              ${index + 1}
+            </div>
+            <div class="ml-4">
+              <h4 class="font-medium">${item.title}</h4>
+            </div>
+          </div>
+        `;
+
+          elements.pathHistoryItems.appendChild(historyItem);
+        });
+      }
+
+      function showReflection() {
+        const scenarios =
+          state.profile === "student" ? studentScenarios : employeeScenarios;
+
+        // Generate path summary
+        let summaryHTML = '<ul class="list-disc pl-6">';
+        state.pathHistory.forEach((item) => {
+          summaryHTML += `<li class="mb-2"><strong>${item.title}</strong></li>`;
+        });
+        summaryHTML += "</ul>";
+        elements.feedbackPathSummary.innerHTML = summaryHTML;
+
+        // Generate ethical considerations
+        elements.feedbackEthics.innerHTML = `
+        <p class="mb-2">Your choices have implications for:</p>
+        <ul class="list-disc pl-6">
+          <li class="mb-2"><strong>Data Privacy:</strong> How your personal information is collected and used</li>
+          <li class="mb-2"><strong>Autonomy:</strong> Your ability to control aspects of your digital presence</li>
+          <li class="mb-2"><strong>Power Dynamics:</strong> The balance of control between individuals and institutions</li>
+        </ul>
+      `;
+
+        // Generate reflection questions
+        const questions = reflectionQuestions[state.profile];
+        let questionsHTML = "";
+        questions.forEach((question) => {
+          questionsHTML += `<li class="mb-2">${question}</li>`;
+        });
+        elements.feedbackQuestions.innerHTML = questionsHTML;
+
+        // Show the overlay
+        elements.feedbackOverlay.classList.remove("hidden");
+      }
+
+      function hideReflection() {
+        elements.feedbackOverlay.classList.add("hidden");
+      }
+
+      function showFlowchart() {
+        // Generate a simple flowchart visualization
+        let flowchartHTML = `<div class="flex flex-col items-center">`;
+
+        state.pathHistory.forEach((item, index) => {
+          flowchartHTML += `
+          <div class="flowchart-node bg-white border-2 border-indigo-600 rounded-lg p-4 mb-4 w-full max-w-md text-center">
+            <p class="font-bold">${item.title}</p>
+          </div>
+        `;
+
+          // Add connector if not the last item
+          if (index < state.pathHistory.length - 1) {
+            flowchartHTML += `
+            <div class="h-10 w-0.5 bg-indigo-600"></div>
+            <div class="h-5 w-5 rounded-full border-2 border-indigo-600 mb-4"></div>
+            <div class="h-10 w-0.5 bg-indigo-600 mb-4"></div>
+          `;
           }
         });
 
-        // Journal toggle
-        journalToggle.addEventListener("click", function () {
-          state.journalVisible = !state.journalVisible;
-          journalContent.style.display = state.journalVisible
-            ? "block"
-            : "none";
-          journalChevron.classList.toggle("fa-chevron-up");
-          journalChevron.classList.toggle("fa-chevron-down");
-        });
+        flowchartHTML += `</div>`;
+        elements.flowchartDiagram.innerHTML = flowchartHTML;
 
-        // Save journal entry
-        saveJournalBtn.addEventListener("click", saveJournalEntry);
-
-        // Restart simulation
-        restartBtn.addEventListener("click", restartSimulation);
+        // Show the overlay
+        elements.flowchartOverlay.classList.remove("hidden");
       }
 
-      // Handle user choice
-      function handleChoice(choiceId) {
-        // Show loading state
-        scenarioContent = document.querySelector(".scenario-content");
-        choicesContainer.style.display = "none";
-        loadingState.style.display = "flex";
-
-        // Simulate API call delay
-        setTimeout(() => {
-          // Call the Scenario Engine Loop (simulated)
-          fetchNextScenario(state.currentScenario, choiceId)
-            .then((scenarioData) => {
-              // Update the scenario
-              updateScenario(scenarioData);
-
-              // Get explanation from the Explanation Generator Loop (simulated)
-              return fetchExplanation(state.currentScenario, choiceId);
-            })
-            .then((explanationData) => {
-              // Update the assistant panel
-              updateAssistant(explanationData);
-
-              // Hide loading state
-              loadingState.style.display = "none";
-              choicesContainer.style.display = "block";
-            });
-        }, 1500);
+      function hideFlowchart() {
+        elements.flowchartOverlay.classList.add("hidden");
       }
 
-      // Fetch next scenario (simulated API call)
-      function fetchNextScenario(currentScenario, choiceId) {
-        return new Promise((resolve) => {
-          // This would be an actual API call in production
-          const mockData = {
-            id: "scenario1",
-            title: "The Classroom Dilemma",
-            text: "Your university has implemented an AI proctoring system for remote exams. The system requires access to your webcam, microphone, and monitors your eye movements and computer activity. Today is your first exam using this system.",
-            choices: [
-              {
-                id: "1",
-                text: "Comply with the system requirements to take the exam",
-              },
-              {
-                id: "2",
-                text: "Request an alternative assessment method due to privacy concerns",
-              },
-              {
-                id: "3",
-                text: "Research the data retention policies before deciding",
-              },
-            ],
-          };
-
-          resolve(mockData);
-        });
-      }
-
-      // Fetch explanation (simulated API call)
-      function fetchExplanation(scenarioId, choiceId) {
-        return new Promise((resolve) => {
-          // This would be an actual API call in production
-          const mockData = {
-            text: "This scenario explores the tension between academic integrity and personal privacy rights. AI proctoring technologies raise significant questions about data collection, consent, and potential discrimination issues. Your choice will navigate different aspects of digital surveillance ethics.",
-          };
-
-          resolve(mockData);
-        });
-      }
-
-      // Update scenario display
-      function updateScenario(scenarioData) {
-        state.currentScenario = scenarioData.id;
-        scenarioTitle.textContent = scenarioData.title;
-        scenarioText.textContent = scenarioData.text;
-
-        // Clear previous choices
-        choicesContainer.innerHTML = "";
-
-        // Add new choices
-        scenarioData.choices.forEach((choice) => {
-          const button = document.createElement("button");
-          button.classList.add(
-            "choice-btn",
-            "w-full",
-            "py-3",
-            "px-4",
-            "bg-indigo-600",
-            "hover:bg-indigo-700",
-            "text-white",
-            "font-medium",
-            "rounded-lg",
-            "text-left"
-          );
-          button.setAttribute("data-choice", choice.id);
-          button.textContent = choice.text;
-          choicesContainer.appendChild(button);
-        });
-      }
-
-      // Update assistant panel
-      function updateAssistant(explanationData) {
-        assistantContent.innerHTML = `<p class="text-gray-700">${explanationData.text}</p>`;
-      }
-
-      // Save journal entry
-      function saveJournalEntry() {
-        const entryText = journalInput.value.trim();
-        if (entryText) {
-          const timestamp = new Date();
-          const entry = {
-            text: entryText,
-            timestamp: timestamp.toISOString(),
-            scenarioId: state.currentScenario,
-          };
-
-          // Add to state
-          state.journalEntries.push(entry);
-
-          // Save to localStorage
-          localStorage.setItem(
-            "journalEntries",
-            JSON.stringify(state.journalEntries)
-          );
-
-          // Add to display
-          addJournalEntryToDisplay(entry);
-
-          // Clear input
-          journalInput.value = "";
-        }
-      }
-
-      // Add journal entry to display
-      function addJournalEntryToDisplay(entry) {
-        const entryElement = document.createElement("div");
-        entryElement.classList.add(
-          "journal-entry",
-          "p-3",
-          "pl-4",
-          "bg-gray-50",
-          "rounded-lg"
-        );
-
-        const date = new Date(entry.timestamp);
-        const formattedDate = `${date.toLocaleDateString()} at ${date.toLocaleTimeString(
-          [],
-          { hour: "2-digit", minute: "2-digit" }
-        )}`;
-
-        entryElement.innerHTML = `
-        <div class="text-sm text-gray-500 mb-1">${formattedDate}</div>
-        <p class="text-gray-700">${entry.text}</p>
-      `;
-
-        journalEntries.prepend(entryElement);
-      }
-
-      // Load journal entries from localStorage
-      function loadJournalEntries() {
-        const savedEntries = localStorage.getItem("journalEntries");
-        if (savedEntries) {
-          state.journalEntries = JSON.parse(savedEntries);
-          state.journalEntries.forEach((entry) => {
-            addJournalEntryToDisplay(entry);
-          });
-        }
-      }
-
-      // Restart simulation
       function restartSimulation() {
-        if (
-          confirm(
-            "Are you sure you want to restart? This will clear your journal entries and reset the simulation."
-          )
-        ) {
-          // Clear journal entries
-          state.journalEntries = [];
-          localStorage.removeItem("journalEntries");
-          journalEntries.innerHTML = "";
+        // Clear local storage
+        localStorage.removeItem("ethicscope-state");
 
-          // Reset to initial state
-          state.currentScenario = "intro";
+        // Reset state
+        state = {
+          loading: false,
+          profile: null,
+          currentScenario: "start",
+          visitedScenarios: [],
+          badges: [],
+          showFeedback: false,
+          showFlowchart: false,
+          pathHistory: [],
+        };
 
-          // Reset UI
-          scenarioTitle.textContent = "Welcome to the Simulation";
-          scenarioText.textContent =
-            "You're about to experience different scenarios involving AI surveillance. Your choices will guide you through various ethical dilemmas and privacy considerations in educational and workplace environments. Choose your path wisely.";
+        // Hide any overlays
+        hideReflection();
+        hideFlowchart();
+        elements.endScreen.classList.add("hidden");
 
-          choicesContainer.innerHTML = `
-          <button class="choice-btn w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-left" data-choice="1">
-            Begin as a student navigating AI monitoring in education
-          </button>
-          <button class="choice-btn w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-left" data-choice="2">
-            Start as a worker experiencing workplace surveillance
-          </button>
-        `;
+        // Show profile selection
+        elements.simulationArea.classList.add("hidden");
+        elements.profileSelection.classList.remove("hidden");
+      }
 
-          assistantContent.innerHTML = `
-          <p class="text-gray-700">
-            I'll provide context and ethical implications for each choice you make throughout this simulation. After you make a decision, I'll explain the privacy and ethical considerations of your choices.
-          </p>
-        `;
+      function shareResults() {
+        // Check if the Web Share API is available
+        if (navigator.share) {
+          navigator
+            .share({
+              title: "My EthicScope Journey",
+              text: `I explored AI ethics in ${state.profile} scenarios with EthicScope!`,
+              url: window.location.href,
+            })
+            .then(() => console.log("Share successful"))
+            .catch((error) => console.log("Share failed", error));
+        } else {
+          // Fallback for browsers that don't support the Web Share API
+          alert(
+            "Share functionality is not available in your browser. Copy the URL to share manually."
+          );
         }
       }
 
-      // Initialize the app
-      init();
+      function saveState() {
+        // Save the current state to localStorage
+        localStorage.setItem(
+          "ethicscope-state",
+          JSON.stringify({
+            profile: state.profile,
+            currentScenario: state.currentScenario,
+            visitedScenarios: state.visitedScenarios,
+            badges: state.badges,
+            pathHistory: state.pathHistory,
+          })
+        );
+      }
     </script>
   </body>
 </html>
